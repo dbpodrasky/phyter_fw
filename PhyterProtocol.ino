@@ -16,26 +16,46 @@ typedef enum {
   ERROR_RESP          = 0xFF
 } PhyterResponse;
 
-char dataBuffer[255];
+char dataBuffer[64];
 
 void parseCommands() {
   if (!Serial.available()) return;
-  int count = Serial.readBytesUntil(CMD_RESP_TERMINATOR, dataBuffer, 255);
+  int count = Serial.readBytesUntil(CMD_RESP_TERMINATOR, dataBuffer, 64);
   if (count == 0) return;
   switch (dataBuffer[0]) {
     case SET_SALINITY:
-      setSalinity(dataBuffer[1]);
+      setSalinity(*((double *) &dataBuffer[1]));
+      sendSalResponse();
       break;
     case BACKGROUND:
       background();
+      Serial.write(BACKGROUND_RESP);
       break;
     case MEASURE:
       measure();
+      sendMeasureResponse();
       break;
     case LED_INTENSITY:
       ledIntensityCheck();
-      break;  
+      Serial.write(LED_INTENSITY_RESP);
+      break;
+    default:
+      Serial.write(ERROR_RESP);
+      break;
   }
+}
+
+void sendSalResponse() {
+  dataBuffer[0] = SET_SALINITY_RESP;
+  *((double *) &dataBuffer[1]) = salinity;
+  Serial.write(dataBuffer, 5);
+}
+
+void sendMeasureResponse() {
+  dataBuffer[0] = MEASURE_RESP;
+  *((double *) &dataBuffer[1]) = pH;
+  *((double *) &dataBuffer[5]) = temp;
+  Serial.write(dataBuffer, 9);
 }
 
 
