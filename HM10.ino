@@ -1,5 +1,10 @@
 
-
+/** 
+ *  *IMPORTANT*
+ *  If using an HC-05 based module (typically labled ZS-040) this should be set to true.
+ *  Otherwise, leave it false.
+ */
+const bool USE_CR_NL = false;
 typedef enum {
   DBM_NEG_23  = 0,
   DBM_NEG_6   = 1,
@@ -9,11 +14,13 @@ typedef enum {
 
 int configureHM10() {
   //some modules output some status info on start up, this clears the buffer
-  Serial.readString();
+  hm10_UART.readString();
+  Serial.println("Checking bluetooth module connectivity...");
   if (!checkBluetooth()) {
     return BT_NOT_RESPONDING;
   }
-  if (!setBluetoothName("PHYTER-DEV-KIT")) {
+  Serial.println("Setting bluetooth name...");
+  if (!setBluetoothName("PHYTER")) {
     return BT_SET_NAME_FAILED;
   }
   return BT_SUCCESS;
@@ -24,9 +31,13 @@ int configureHM10() {
    @return true if successful
 */
 bool checkBluetooth() {
-  Serial.print("AT\r\n");
-  String resp = Serial.readString();
-  return resp.indexOf("OK") == 0;
+  String at = "AT";
+  if (USE_CR_NL) {
+    at += "\r\n";
+  }
+  hm10_UART.print(at);
+  String resp = hm10_UART.readString();
+  return resp.indexOf("OK") >= 0;
 }
 
 /**
@@ -47,10 +58,14 @@ bool sendATCommand(String paramName, String value) {
   String command = "AT+";
   command += paramName;
   command += value;
-  command += "\r\n";
-  Serial.print(command);
-  String resp = Serial.readString();
-  return resp.indexOf("OK") > 0;
+  if (USE_CR_NL) {
+    command += "\r\n";    
+  }
+  Serial.println("Sending AT Command: " + command);
+  hm10_UART.print(command);
+  String resp = hm10_UART.readString();
+  Serial.println("AT Command Response: " + resp);
+  return resp.indexOf("OK") >= 0;
 }
 
 

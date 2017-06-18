@@ -1,5 +1,6 @@
   #include <Wire.h>
   #include <Adafruit_ADS1015.h>
+  #include <SoftwareSerial.h>
   #define BT_SUCCESS          0
   #define BT_NOT_RESPONDING   1
   #define BT_SET_NAME_FAILED  2
@@ -13,20 +14,25 @@
   double R = 0;
   
   //detector signal pin
-  int dPin = 5;
-  int dPos = 6;
+  int dPin = 0;
+  int dPos = 4;
   
   //time the LED is on
   double dlay = 250;
   
   //LED output pins (434nm and 578nm)
-  int gPin = 5;
+  int gPin = 2;
   int bPin = 3;
+
+  //UART for HM10
+  int HM10_tx = 7;
+  int HM10_rx = 8;
+  SoftwareSerial hm10_UART(HM10_tx, HM10_rx);
   
   //thermistor positive pin
   int thermP = 10;
   //thermistor signal pin
-  int thermistorPin = 4;
+  int thermistorPin = 2;
   
   //on off LED
   int LED = 10;
@@ -34,8 +40,9 @@
   void setup() {
     //Begin Serial Connections
     Serial.begin(9600);
-    Serial.setTimeout(1000); //1 sec timeout for buffered reads
     ads1115.begin();
+    hm10_UART.begin(9600);
+    hm10_UART.setTimeout(1000); //1 sec timeout for buffered reads
     
     //Define output pins
     pinMode(gPin,OUTPUT);
@@ -54,6 +61,7 @@
     //bluetooth
     int btResult = configureHM10();
     if (btResult != BT_SUCCESS) {
+      Serial.println("Error initializing bluetooth module");
       fatalError(btResult);
     }
     
@@ -95,7 +103,7 @@
     delay(dlay);
     //Measuring dark noise
     for(i=0;i<10;++i){
-      dark+=ads1115.readADC_SingleEnded(0);
+      dark+=ads1115.readADC_SingleEnded(dPin);
     }
     //Averaging 10 measurments
     dark/=10;
@@ -106,7 +114,7 @@
   
     //taking measurement
     for(i=0;i<10;++i){
-    blue+=ads1115.readADC_SingleEnded(0);
+    blue+=ads1115.readADC_SingleEnded(dPin);
     }
     //Averaging 10 measurments
     blue/=10; 
@@ -134,7 +142,7 @@
     delay(dlay);
     //Measuring dark noise (10 measurements)
     for(i=0;i<10;++i){
-      dark+=ads1115.readADC_SingleEnded(0);
+      dark+=ads1115.readADC_SingleEnded(dPin);
     }
     //Averaging 10 measurments
     dark/=10;
@@ -145,7 +153,7 @@
   
     //taking measurement
     for(i=0;i<10;++i){
-      green+=ads1115.readADC_SingleEnded(0);
+      green+=ads1115.readADC_SingleEnded(dPin);
     }
     //Averaging 10 measurments
     green/=10; 
@@ -173,7 +181,7 @@
     //           R             Rt            
     
     //calculates thermistor resistance [ohm]
-    int bits = ads1115.readADC_SingleEnded(1);         //reading Vx pin
+    int bits = ads1115.readADC_SingleEnded(thermistorPin);         //reading Vx pin
     double Vx = bits*0.000188;            //converting bits to voltage
     double Rt = (14000*Vx)/(5-Vx);                //calculate Rt
   
