@@ -4,7 +4,7 @@
  *  If using an HC-05 based module (typically labled ZS-040) this should be set to true.
  *  Otherwise, leave it false.
  */
-const bool USE_CR_NL = false;
+const bool USE_CR_NL = true;
 typedef enum {
   DBM_NEG_23  = 0,
   DBM_NEG_6   = 1,

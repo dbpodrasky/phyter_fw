@@ -11,8 +11,9 @@ typedef enum {
 typedef enum {
   SET_SALINITY_RESP   = 0x81,
   BACKGROUND_RESP     = 0x82,
-  MEASURE_RESP        = 0x83,
-  LED_INTENSITY_RESP  = 0x84,
+  MEASURE_RESP1       = 0x83,
+  MEASURE_RESP2       = 0x84,
+  LED_INTENSITY_RESP  = 0x85,
   ERROR_RESP          = 0xFF
 } PhyterResponse;
 
@@ -52,10 +53,16 @@ void sendSalResponse() {
 }
 
 void sendMeasureResponse() {
-  dataBuffer[0] = MEASURE_RESP;
+  dataBuffer[0] = MEASURE_RESP1;
   *((double *) &dataBuffer[1]) = pH;
   *((double *) &dataBuffer[5]) = temp;
   hm10_UART.write(dataBuffer, 9);
+  delay(500);
+  dataBuffer[0] = MEASURE_RESP2;
+  *((double *) &dataBuffer[1]) = A578;
+  *((double *) &dataBuffer[5]) = A434;
+  *((double *) &dataBuffer[9]) = dark;
+  hm10_UART.write(dataBuffer, 13); 
 }
 
 
